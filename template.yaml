@@ -78,19 +78,6 @@
         ApiStages:
           - ApiId: !Ref ProductApiGateway
             Stage: Prod
-
-  # 5. API Key (Required for API Access)
-  ProductAPIKey:
-    Type: AWS::ApiGateway::ApiKey
-    Properties:
-      Name: ProductAPIKey
-      Enabled: true
-      StageKeys:
-        - RestApiId: !Ref ProductApiGateway
-          StageName: Prod
-
-
-
       # Lambda Function: Get Products
     GetAllProductsFunction:
       Type: AWS::Serverless::Function

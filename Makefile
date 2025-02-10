@@ -29,7 +29,7 @@ push:
 		IMAGE_NAME=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(ECR_REPO):$$LOWER_FUNCTION; \
 		if docker images | grep -q "$$LOWER_FUNCTION"; then \
 			echo "Tagging and pushing $$LOWER_FUNCTION..."; \
-			docker tag $$LOWER_FUNCTION $$IMAGE_NAME; \
+			docker tag $$IMAGE_NAME $$LOWER_FUNCTION ; \
 			docker push $$IMAGE_NAME; \
 		else \
 			echo "Skipping $$LOWER_FUNCTION: Image does not exist"; \
