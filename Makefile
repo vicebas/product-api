@@ -18,7 +18,9 @@ build:
 	@for function in $(FUNCTIONS); do \
 	    echo "Building $$function..."; \
 		LOWER_FUNCTION=$$(echo $$function | tr '[:upper:]' '[:lower:]'); \
-		docker build --build-arg FUNCTION_DIR=lambdas/$$function -t $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(ECR_REPO):$$LOWER_FUNCTION .; \
+		docker build --platform linux/amd64 --provenance=false \
+		 --build-arg FUNCTION_DIR=lambdas/$$function \
+		 -t $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(ECR_REPO):$$LOWER_FUNCTION .; \
 	done
 
 push:
