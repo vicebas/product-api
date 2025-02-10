@@ -1,0 +1,55 @@
+{
+    "info": {
+      "_postman_id": "12345-67890",
+      "name": "Product API Postman Collection",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Sign Up",
+        "request": {
+          "method": "POST",
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": {
+            "mode": "raw",
+            "raw": "{\"username\": \"testuser\", \"password\": \"SecurePass123!\", \"email\": \"testuser@example.com\"}"
+          },
+          "url": { "raw": "{{base_url}}/signup", "host": ["{{base_url}}"], "path": ["signup"] }
+        }
+      },
+      {
+        "name": "Sign In",
+        "request": {
+          "method": "POST",
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": {
+            "mode": "raw",
+            "raw": "{\"username\": \"testuser\", \"password\": \"SecurePass123!\"}"
+          },
+          "url": { "raw": "{{base_url}}/signin", "host": ["{{base_url}}"], "path": ["signin"] }
+        }
+      },
+      {
+        "name": "Get All Products",
+        "request": {
+          "method": "GET",
+          "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+          "url": { "raw": "{{base_url}}/products", "host": ["{{base_url}}"], "path": ["products"] }
+        }
+      },
+      {
+        "name": "Get Product by ID",
+        "request": {
+          "method": "GET",
+          "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+          "url": { "raw": "{{base_url}}/products/{{product_id}}", "host": ["{{base_url}}"], "path": ["products", "{{product_id}}"] }
+        }
+      }
+    ],
+    "variable": [
+      { "key": "base_url", "value": "https://3ubxb9kttd.execute-api.us-east-1.amazonaws.com/Prod/" },
+      { "key": "access_token", "value": "" },
+      { "key": "product_id", "value": "1" }
+    ]
+  }
+  
