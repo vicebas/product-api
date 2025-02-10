@@ -30,6 +30,18 @@
         }
       },
       {
+        "name": "Confirm User",
+        "request": {
+          "method": "POST",
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": {
+            "mode": "raw",
+            "raw": "{\"username\": \"testuser\", \"confirmationCode\": \"123456\"}"
+          },
+          "url": { "raw": "{{base_url}}/confirm", "host": ["{{base_url}}"], "path": ["confirm"] }
+        }
+      },
+      {
         "name": "Get All Products",
         "request": {
           "method": "GET",
