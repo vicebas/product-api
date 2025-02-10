@@ -1,5 +1,6 @@
+
 # Use AWS Lambda base image for Node.js 18
-FROM public.ecr.aws/lambda/nodejs:18
+FROM --platform=linux/x86-64 public.ecr.aws/lambda/nodejs:18
 
 # Set working directory
 WORKDIR /var/task
