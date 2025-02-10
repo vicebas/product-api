@@ -119,7 +119,7 @@ The `/signup` endpoint expects the following JSON payload:
 
 ```json
 {
-  "user": "username",
+  "user": "user@example.com",
   "email": "user@example.com",
   "password": "yourpassword"
 }
