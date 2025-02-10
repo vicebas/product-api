@@ -52,7 +52,32 @@ Resources:
         ResourcePolicy:
           AwsAccountWhitelist:
           - '*'
-  GetProductsFunction:
+    GatewayResponses:
+      DEFAULT_4XX:
+        ResponseTemplates:
+          application/json: '{"message": "Invalid request"}'
+      DEFAULT_5XX:
+        ResponseTemplates:
+          application/json: '{"message": "Internal server error"}'
+    MethodSettings:
+    - ResourcePath: /*
+      HttpMethod: '*'
+      ThrottlingRateLimit: 10
+      ThrottlingBurstLimit: 5
+    UsagePlan:
+      CreateUsagePlan: PER_API
+      Description: Rate Limit Plan
+      Throttle:
+        RateLimit: 10
+        BurstLimit: 5
+      Quota:
+        Limit: 1000
+        Period: MONTH
+      ApiStages:
+      - ApiId:
+          Ref: ProductApiGateway
+        Stage: Prod
+  GetAllProductsFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image

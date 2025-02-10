@@ -1,141 +1,175 @@
-AWSTemplateFormatVersion: 2010-09-09
-Description: product-api
-Transform:
-  - AWS::Serverless-2016-10-31
+  AWSTemplateFormatVersion: 2010-09-09
+  Description: product-api
+  Transform:
+    - AWS::Serverless-2016-10-31
 
 
-Resources:
-  # API Gateway
-  CognitoUserPool:
-    Type: AWS::Cognito::UserPool
+  Resources:
+    # API Gateway
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ProductAPIUserPool
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireUppercase: true
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: false
+        UsernameAttributes:
+          - email
+        AutoVerifiedAttributes:
+          - email
+
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: ProductAPIClient
+        UserPoolId: !Ref CognitoUserPool
+        ExplicitAuthFlows:
+          - ALLOW_USER_PASSWORD_AUTH
+          - ALLOW_REFRESH_TOKEN_AUTH
+          - ALLOW_USER_SRP_AUTH
+        GenerateSecret: false
+    
+    CognitoUserPoolDomain:
+      Type: AWS::Cognito::UserPoolDomain
+      Properties:
+        Domain: product-api-auth  # Change this to a unique name
+        UserPoolId: !Ref CognitoUserPool
+
+    # API Gateway Definition
+    ProductApiGateway:
+      Type: AWS::Serverless::Api
+      Properties:
+        Name: ProductAPI
+        StageName: Prod
+        Auth:
+          DefaultAuthorizer: CognitoAuthorizer
+          AddDefaultAuthorizerToCorsPreflight: false
+          Authorizers:
+            CognitoAuthorizer:
+              UserPoolArn: !GetAtt CognitoUserPool.Arn
+          ResourcePolicy:
+            AwsAccountWhitelist:
+              - "*"
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseTemplates:
+            application/json: '{"message": "Invalid request"}'
+        DEFAULT_5XX:
+          ResponseTemplates:
+            application/json: '{"message": "Internal server error"}'
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          ThrottlingRateLimit: 10
+          ThrottlingBurstLimit: 5
+      UsagePlan:
+        CreateUsagePlan: PER_API
+        Description: "Rate Limit Plan"
+        Throttle:
+          RateLimit: 10
+          BurstLimit: 5
+        Quota:
+          Limit: 1000
+          Period: MONTH
+        ApiStages:
+          - ApiId: !Ref ProductApiGateway
+            Stage: Prod
+
+  # 5. API Key (Required for API Access)
+  ProductAPIKey:
+    Type: AWS::ApiGateway::ApiKey
     Properties:
-      UserPoolName: ProductAPIUserPool
-      Policies:
-        PasswordPolicy:
-          MinimumLength: 8
-          RequireUppercase: true
-          RequireLowercase: true
-          RequireNumbers: true
-          RequireSymbols: false
-      UsernameAttributes:
-        - email
-      AutoVerifiedAttributes:
-        - email
-
-  CognitoUserPoolClient:
-    Type: AWS::Cognito::UserPoolClient
-    Properties:
-      ClientName: ProductAPIClient
-      UserPoolId: !Ref CognitoUserPool
-      ExplicitAuthFlows:
-        - ALLOW_USER_PASSWORD_AUTH
-        - ALLOW_REFRESH_TOKEN_AUTH
-        - ALLOW_USER_SRP_AUTH
-      GenerateSecret: false
-  
-  CognitoUserPoolDomain:
-    Type: AWS::Cognito::UserPoolDomain
-    Properties:
-      Domain: product-api-auth  # Change this to a unique name
-      UserPoolId: !Ref CognitoUserPool
-
-  # API Gateway Definition
-  ProductApiGateway:
-    Type: AWS::Serverless::Api
-    Properties:
-      Name: ProductAPI
-      StageName: Prod
-      Auth:
-        DefaultAuthorizer: CognitoAuthorizer
-        AddDefaultAuthorizerToCorsPreflight: false
-        Authorizers:
-          CognitoAuthorizer:
-            UserPoolArn: !GetAtt CognitoUserPool.Arn
-        ResourcePolicy:
-          AwsAccountWhitelist:
-            - "*"
+      Name: ProductAPIKey
+      Enabled: true
+      StageKeys:
+        - RestApiId: !Ref ProductApiGateway
+          StageName: Prod
 
 
 
-    # Lambda Function: Get Products
-  GetProductsFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      PackageType: Image
-      ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:getallproducts"
-      Policies:
-        - AWSLambdaBasicExecutionRole
-      Events:
-        GetProducts:
-          Type: Api
-          Properties:
-            Path: /products
-            RestApiId: !Ref ProductApiGateway
-            Method: get
+      # Lambda Function: Get Products
+    GetAllProductsFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        PackageType: Image
+        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:getallproducts"
+        Policies:
+          - AWSLambdaBasicExecutionRole
+        Events:
+          GetProducts:
+            Type: Api
+            Properties:
+              Path: /products
+              RestApiId: !Ref ProductApiGateway
+              Method: get
 
-  # Lambda Function: Get Product by ID
-  GetProductByIdFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      PackageType: Image
-      ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:getproductbyid"
-      Policies:
-        - AWSLambdaBasicExecutionRole
-      Events:
-        GetProductById:
-          Type: Api
-          Properties:
-            Path: /products/{id}
-            RestApiId: !Ref ProductApiGateway
-            Method: get
+    # Lambda Function: Get Product by ID
+    GetProductByIdFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        PackageType: Image
+        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:getproductbyid"
+        Policies:
+          - AWSLambdaBasicExecutionRole
+        Events:
+          GetProductById:
+            Type: Api
+            Properties:
+              Path: /products/{id}
+              RestApiId: !Ref ProductApiGateway
+              Method: get
 
 
-  # Lambda Function: Sign Up
-  SignUpFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      PackageType: Image
-      ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:signup"
-      Environment:
-        Variables:
-          USER_POOL_CLIENT_ID: !Ref CognitoUserPoolClient
-      Policies:
-        - AWSLambdaBasicExecutionRole
-      Events:
-        SignUp:
-          Type: Api
-          Properties:
-            Path: /signup
-            Method: post
-            RestApiId: !Ref ProductApiGateway
-            Auth:
-              Authorizer: NONE
+    # Lambda Function: Sign Up
+    SignUpFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        PackageType: Image
+        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:signup"
+        Environment:
+          Variables:
+            USER_POOL_CLIENT_ID: !Ref CognitoUserPoolClient
+        Policies:
+          - AWSLambdaBasicExecutionRole
+        Events:
+          SignUp:
+            Type: Api
+            Properties:
+              Path: /signup
+              Method: post
+              RestApiId: !Ref ProductApiGateway
+              Auth:
+                Authorizer: NONE
 
-  # Lambda Function: Sign In
-  SignInFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      PackageType: Image
-      ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:signin"
-      Environment:
-        Variables:
-          USER_POOL_CLIENT_ID: !Ref CognitoUserPoolClient
+    # Lambda Function: Sign In
+    SignInFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        PackageType: Image
+        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:signin"
+        Environment:
+          Variables:
+            USER_POOL_CLIENT_ID: !Ref CognitoUserPoolClient
 
-      Policies:
-        - AWSLambdaBasicExecutionRole
-      Events:
-        SignIn:
-          Type: Api
-          
-          Properties:
-            Path: /signin
-            Method: post
-            RestApiId: !Ref ProductApiGateway
-            Auth:
-              Authorizer: NONE
-          
-Outputs:
+        Policies:
+          - AWSLambdaBasicExecutionRole
+        Events:
+          SignIn:
+            Type: Api
+            
+            Properties:
+              Path: /signin
+              Method: post
+              RestApiId: !Ref ProductApiGateway
+              Auth:
+                Authorizer: NONE
+            
+  Outputs:
 
-  ProductAPI:
-    Description: "API Gateway endpoint URL for Prod stage"
-    Value: !Sub "https://${ProductApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    ProductAPI:
+      Description: "API Gateway endpoint URL for Prod stage"
+      Value: !Sub "https://${ProductApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
