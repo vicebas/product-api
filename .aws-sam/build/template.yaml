@@ -3,6 +3,47 @@ Description: product-api
 Transform:
 - AWS::Serverless-2016-10-31
 Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ProductAPILambdaRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+      - PolicyName: CognitoAccess
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - cognito-idp:AdminCreateUser
+            - cognito-idp:AdminConfirmSignUp
+            - cognito-idp:InitiateAuth
+            - cognito-idp:RespondToAuthChallenge
+            - cognito-idp:AdminGetUser
+            Resource:
+              Fn::GetAtt:
+              - CognitoUserPool
+              - Arn
+      - PolicyName: CloudWatchLogs
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: '*'
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -83,8 +124,10 @@ Resources:
       PackageType: Image
       ImageUri:
         Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:getallproducts
-      Policies:
-      - AWSLambdaBasicExecutionRole
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
       Events:
         GetProducts:
           Type: Api
@@ -99,8 +142,10 @@ Resources:
       PackageType: Image
       ImageUri:
         Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:getproductbyid
-      Policies:
-      - AWSLambdaBasicExecutionRole
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
       Events:
         GetProductById:
           Type: Api
@@ -119,6 +164,10 @@ Resources:
         Variables:
           USER_POOL_CLIENT_ID:
             Ref: CognitoUserPoolClient
+      Role:
+        Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
       Policies:
       - AWSLambdaBasicExecutionRole
       Events:

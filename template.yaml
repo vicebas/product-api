@@ -5,6 +5,46 @@
 
 
   Resources:
+    # Lambda Execution Role
+    LambdaExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ProductAPILambdaRole
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action:
+                - sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        Policies:
+          - PolicyName: CognitoAccess
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - cognito-idp:AdminCreateUser
+                    - cognito-idp:AdminConfirmSignUp
+                    - cognito-idp:InitiateAuth
+                    - cognito-idp:RespondToAuthChallenge
+                    - cognito-idp:AdminGetUser
+                  Resource: !GetAtt CognitoUserPool.Arn
+          - PolicyName: CloudWatchLogs
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: "*"
+
     # API Gateway
     CognitoUserPool:
       Type: AWS::Cognito::UserPool
@@ -84,8 +124,7 @@
       Properties:
         PackageType: Image
         ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:getallproducts"
-        Policies:
-          - AWSLambdaBasicExecutionRole
+        Role: !GetAtt LambdaExecutionRole.Arn
         Events:
           GetProducts:
             Type: Api
@@ -100,8 +139,7 @@
       Properties:
         PackageType: Image
         ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:getproductbyid"
-        Policies:
-          - AWSLambdaBasicExecutionRole
+        Role: !GetAtt LambdaExecutionRole.Arn
         Events:
           GetProductById:
             Type: Api
@@ -120,6 +158,7 @@
         Environment:
           Variables:
             USER_POOL_CLIENT_ID: !Ref CognitoUserPoolClient
+        Role: !GetAtt LambdaExecutionRole.Arn
         Policies:
           - AWSLambdaBasicExecutionRole
         Events:
@@ -180,3 +219,5 @@
     ProductAPI:
       Description: "API Gateway endpoint URL for Prod stage"
       Value: !Sub "https://${ProductApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+
+
