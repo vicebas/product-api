@@ -199,9 +199,4 @@ aws cloudformation describe-stacks --stack-name product-api --query "Stacks[0].O
 - Logs for API Gateway and Lambda functions are available in **AWS CloudWatch**.
 - Modify `template.yaml` to add or update AWS resources.
 
----
-
-### Need Help?
-
-For issues or improvements, feel free to create an issue or submit a pull request! 🚀
 
