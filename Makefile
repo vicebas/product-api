@@ -50,7 +50,8 @@ update-lambda:
 		aws lambda update-function-code --function-name $$LAMBDA_NAME --image-uri $$IMAGE_NAME --region $(AWS_REGION) > /dev/null; \
 	done
 
-deploy: build push 
+sam-deploy:
 	@echo "Deploying with AWS SAM..."
-	sam build  && sam deploy --resolve-image-repos
-	update-lambda
+	sam build && sam deploy --resolve-image-repos --capabilities CAPABILITY_NAMED_IAM  
+
+deploy: build push sam-deploy update-lambda
