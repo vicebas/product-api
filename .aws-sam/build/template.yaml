@@ -131,6 +131,28 @@ Resources:
               Ref: ProductApiGateway
             Auth:
               Authorizer: NONE
+  ConfirmUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      ImageUri:
+        Fn::Sub: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/product-api-repository:confirmuser
+      Environment:
+        Variables:
+          USER_POOL_CLIENT_ID:
+            Ref: CognitoUserPoolClient
+      Policies:
+      - AWSLambdaBasicExecutionRole
+      Events:
+        ConfirmUser:
+          Type: Api
+          Properties:
+            Path: /confirm
+            Method: post
+            RestApiId:
+              Ref: ProductApiGateway
+            Auth:
+              Authorizer: NONE
   SignInFunction:
     Type: AWS::Serverless::Function
     Properties:

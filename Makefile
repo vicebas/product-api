@@ -3,7 +3,7 @@ AWS_ACCOUNT_ID=$(shell grep AWS_ACCOUNT_ID .env | cut -d '=' -f2)
 ECR_REPO=product-api-repository
 
 # Function Names
-FUNCTIONS = getAllProducts getProductById signUp signIn
+FUNCTIONS = getAllProducts getProductById signUp signIn confirmUser
 
 
 # Build, Push, and Deploy Everything
@@ -16,6 +16,7 @@ create-repo:
 build:
 	@echo "Building Docker images..."
 	@for function in $(FUNCTIONS); do \
+	    echo "Building $$function..."; \
 		LOWER_FUNCTION=$$(echo $$function | tr '[:upper:]' '[:lower:]'); \
 		docker build --build-arg FUNCTION_DIR=lambdas/$$function -t $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(ECR_REPO):$$LOWER_FUNCTION .; \
 	done
@@ -51,5 +52,5 @@ update-lambda:
 
 deploy: build push 
 	@echo "Deploying with AWS SAM..."
-	sam build --use-container && sam deploy --resolve-image-repos
+	sam build  && sam deploy --resolve-image-repos
 	update-lambda
